@@ -1,4 +1,4 @@
-name: Build Linux FFmpeg simple
+name: Build FFmpeg win64-nonfree
 
 on:
   workflow_dispatch:
@@ -6,11 +6,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install deps
         run: sudo apt update && sudo apt install -y yasm nasm build-essential
 
+      - name: Build image
+        run: |
+          ./makeimage.sh win64 nonfree
+
       - name: Build FFmpeg
-        run: ./build.sh win64 nonfree
+        run: |
+          ./build.sh win64 nonfree
