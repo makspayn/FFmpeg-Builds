@@ -6,19 +6,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # GH hosted обычно ограничен ~6 часов, оставляем запас
-    timeout-minutes: 720
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build Image
+      - name: Pull cached image
         run: |
-          chmod +x makeimage.sh
-          ./makeimage.sh win64 nonfree
+          docker pull ghcr.io/nanake/win64-nonfree:cache
 
       - name: Build FFmpeg (win64 nonfree)
+        env:
+          IMAGE: ghcr.io/nanake/win64-nonfree:cache
         run: |
           chmod +x build.sh
           ./build.sh win64 nonfree
