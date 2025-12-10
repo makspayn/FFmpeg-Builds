@@ -1,23 +1,41 @@
-name: Build FFmpeg win64-nonfree
-
+name: build-win64-nonfree
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    # GH hosted обычно ограничен ~6 часов, оставляем запас
+    timeout-minutes: 360
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      - name: Install deps
-        run: sudo apt update && sudo apt install -y yasm nasm build-essential
-
-      - name: Build image
+      - name: Ensure Docker available
         run: |
-          ./makeimage.sh win64 nonfree
+          docker version
 
-      - name: Build FFmpeg
+      - name: Pull prebuilt base image (avoid makeimage)
         run: |
-          ./build.sh win64 nonfree
+          docker pull ghcr.io/btbn/ffmpeg-builds/base-win64:latest
+
+      - name: Run build.sh inside container (win64 nonfree)
+        run: |
+          # монтируем код в /work; build.sh положит артефакты в artifacts/
+          docker run --rm \
+            -v "${{ github.workspace }}":/work \
+            -w /work \
+            ghcr.io/btbn/ffmpeg-builds/base-win64:latest \
+            /bin/bash -lc "./build.sh win64 nonfree"
+
+      - name: List artifacts
+        run: ls -la artifacts || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-win64-nonfree
+          path: artifacts/*.zip
